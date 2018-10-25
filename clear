@@ -1,0 +1,26 @@
+#include <stdio.h>
+#include <string.h>
+#include <sys/socket.h>
+#include <linux/netlink.h>
+#include <linux/netfilter/nfnetlink.h>
+#include <linux/netfilter/nfnetlink_conntrack.h>
+ 
+int main()
+{
+	char buf[64]={0};
+	int fd;
+	struct sockaddr_nl sa;
+	struct nlmsghdr *nh=(struct nlmsghdr *)buf;
+	
+	fd = socket(AF_NETLINK, SOCK_RAW, NETLINK_NETFILTER);
+	nh->nlmsg_len =  NLMSG_SPACE(sizeof(struct nfgenmsg));
+	struct iovec iov = { nh, nh->nlmsg_len };
+	struct msghdr msg = { &sa, sizeof(sa), &iov, 1, NULL, 0, 0 };
+	memset(&sa, 0, sizeof(sa));
+	sa.nl_family = AF_NETLINK;
+	nh->nlmsg_type = (NFNL_SUBSYS_CTNETLINK<<8 |IPCTNL_MSG_CT_DELETE);
+	nh->nlmsg_flags |= NLM_F_REQUEST;
+ 
+	sendmsg(fd, &msg, 0);
+ 
+}
